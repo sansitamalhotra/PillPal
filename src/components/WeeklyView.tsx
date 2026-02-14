@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { playSound } from '../utils/sounds';
 
 interface WeeklyViewProps {
   onBack: () => void;
@@ -17,12 +18,18 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
   const [dayStatuses, setDayStatuses] = useState<Record<number, DayStatus>>(
     Object.fromEntries(days.map((_, i) => [i, { 
       taken: false, 
-      pillCount: i % 2 === 0 ? 3 : 2 // Alternating 3 and 2 pills per day
+      pillCount: i % 2 === 0 ? 3 : 2 
     }]))
   );
   const [showConfetti, setShowConfetti] = useState(false);
   const [showRefillAlert, setShowRefillAlert] = useState(false);
   const [refillSent, setRefillSent] = useState(false);
+  const [showAchievement, setShowAchievement] = useState(false);
+  const [achievementText, setAchievementText] = useState('');
+  const [streak, setStreak] = useState(0);
+  const [displayedPercentage, setDisplayedPercentage] = useState(0);
+  const [displayedTaken, setDisplayedTaken] = useState(0);
+  const [displayedRemaining, setDisplayedRemaining] = useState(7);
 
   const pillboxColors = [
     'from-pink-400 to-pink-500',
@@ -34,16 +41,86 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
     'from-purple-400 to-purple-500',
   ];
 
+  const takenCount = Object.values(dayStatuses).filter(d => d.taken).length;
+  const adherencePercentage = (takenCount / 7) * 100;
+  const remainingDays = 7 - takenCount;
+
+  // Animated counting effect
+  useEffect(() => {
+    const percentageInterval = setInterval(() => {
+      setDisplayedPercentage(prev => {
+        if (prev < adherencePercentage) return Math.min(prev + 2, adherencePercentage);
+        return prev;
+      });
+    }, 20);
+
+    const takenInterval = setInterval(() => {
+      setDisplayedTaken(prev => {
+        if (prev < takenCount) return prev + 1;
+        return prev;
+      });
+    }, 100);
+
+    const remainingInterval = setInterval(() => {
+      setDisplayedRemaining(prev => {
+        if (prev > remainingDays) return prev - 1;
+        return prev;
+      });
+    }, 100);
+
+    return () => {
+      clearInterval(percentageInterval);
+      clearInterval(takenInterval);
+      clearInterval(remainingInterval);
+    };
+  }, [adherencePercentage, takenCount, remainingDays]);
+
+  // Calculate streak
+  useEffect(() => {
+    let currentStreak = 0;
+    const today = new Date().getDay();
+    
+    for (let i = today; i >= 0; i--) {
+      if (dayStatuses[i].taken) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+    setStreak(currentStreak);
+  }, [dayStatuses]);
+
+  // Check for achievements
+  useEffect(() => {
+    if (takenCount === 7) {
+      setAchievementText('Perfect Week! 🎉');
+      setShowAchievement(true);
+      playSound('success');
+      setTimeout(() => setShowAchievement(false), 4000);
+    } else if (streak === 3) {
+      setAchievementText('3-Day Streak! 🔥');
+      setShowAchievement(true);
+      playSound('ding');
+      setTimeout(() => setShowAchievement(false), 3000);
+    } else if (streak === 5) {
+      setAchievementText('5-Day Streak! 🔥🔥');
+      setShowAchievement(true);
+      playSound('success');
+      setTimeout(() => setShowAchievement(false), 3000);
+    }
+  }, [takenCount, streak]);
+
   // Check if pills are running low
   useEffect(() => {
-    const remainingDays = Object.values(dayStatuses).filter(d => !d.taken).length;
     if (remainingDays <= 2 && !refillSent) {
       setShowRefillAlert(true);
     }
-  }, [dayStatuses, refillSent]);
+  }, [remainingDays, refillSent]);
 
   const handleTakePill = (dayIndex: number) => {
     if (!dayStatuses[dayIndex].taken) {
+      playSound('pop');
+      
       setDayStatuses({
         ...dayStatuses,
         [dayIndex]: { 
@@ -59,14 +136,10 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
   };
 
   const handleRefillRequest = () => {
+    playSound('whoosh');
     setRefillSent(true);
     setShowRefillAlert(false);
-    console.log('Refill request sent to pharmacy!');
   };
-
-  const takenCount = Object.values(dayStatuses).filter(d => d.taken).length;
-  const adherencePercentage = (takenCount / 7) * 100;
-  const remainingDays = 7 - takenCount;
 
   return (
     <motion.div
@@ -79,14 +152,13 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
       <AnimatePresence>
         {showConfetti && (
           <div className="fixed inset-0 pointer-events-none z-50">
-            {[...Array(60)].map((_, i) => (
+            {[...Array(80)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-3 h-3 rounded-full"
+                className="absolute"
                 style={{
                   left: `${Math.random() * 100}%`,
                   top: '-10%',
-                  backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][i % 5]
                 }}
                 initial={{ y: 0, opacity: 1, rotate: 0 }}
                 animate={{
@@ -100,9 +172,47 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
                   ease: 'easeIn'
                 }}
                 exit={{ opacity: 0 }}
-              />
+              >
+                {/* Mix of confetti and sparkles */}
+                {i % 3 === 0 ? (
+                  <div className="text-2xl">✨</div>
+                ) : (
+                  <div 
+                    className="w-3 h-3 rounded-full"
+                    style={{
+                      backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][i % 5]
+                    }}
+                  />
+                )}
+              </motion.div>
             ))}
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Achievement Badge */}
+      <AnimatePresence>
+        {showAchievement && (
+          <motion.div
+            initial={{ scale: 0, y: -100, rotate: -180 }}
+            animate={{ scale: 1, y: 0, rotate: 0 }}
+            exit={{ scale: 0, y: -100, rotate: 180 }}
+            transition={{ type: 'spring', stiffness: 200 }}
+            className="fixed top-32 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white px-10 py-6 rounded-3xl shadow-2xl border-4 border-white"
+          >
+            <motion.div
+              animate={{
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: 0.5,
+                repeat: Infinity,
+              }}
+              className="text-4xl font-black text-center"
+            >
+              {achievementText}
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -162,7 +272,10 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
         <motion.button
           whileHover={{ scale: 1.05, x: -5 }}
           whileTap={{ scale: 0.95 }}
-          onClick={onBack}
+          onClick={() => {
+            playSound('whoosh');
+            onBack();
+          }}
           className="p-4 bg-white/80 backdrop-blur-sm rounded-full shadow-lg mb-6 flex items-center gap-2 font-semibold text-gray-700"
         >
           ← Back
@@ -180,96 +293,123 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
           }}>
             Your Weekly Tracker
           </h1>
-          <p className="text-xl text-gray-600">Lisinopril 10mg • Once daily</p>
-        </motion.div>
+          <p className="text-xl text-gray-600">
+            {medications.length > 0 ? medications[0].name : 'Your Medications'} • Track your progress
+          </p>
 
-        {/* Stats Card */}
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl p-8 mb-10 border border-white/40"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium mb-2">Adherence This Week</p>
-              <motion.p 
-                className="text-6xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"
-                key={adherencePercentage}
-                initial={{ scale: 1.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-              >
-                {adherencePercentage.toFixed(0)}%
-              </motion.p>
-            </div>
-            
-            <div className="flex gap-12">
-              <div className="text-center">
-                <motion.p 
-                  className="text-5xl font-bold text-green-500"
-                  key={takenCount}
-                  initial={{ scale: 1.5 }}
-                  animate={{ scale: 1 }}
-                >
-                  {takenCount}
-                </motion.p>
-                <p className="text-sm text-gray-500 mt-1">Taken</p>
-              </div>
-              <div className="text-center">
-                <motion.p 
-                  className="text-5xl font-bold text-orange-500"
-                  key={remainingDays}
-                  initial={{ scale: 1.5 }}
-                  animate={{ scale: 1 }}
-                >
-                  {remainingDays}
-                </motion.p>
-                <p className="text-sm text-gray-500 mt-1">Remaining</p>
-              </div>
-            </div>
-
-            {/* Animated Progress Ring */}
-            <svg className="w-40 h-40 -rotate-90">
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                fill="none"
-                stroke="#e0e7ff"
-                strokeWidth="12"
-              />
-              <motion.circle
-                cx="80"
-                cy="80"
-                r="70"
-                fill="none"
-                stroke="url(#gradient)"
-                strokeWidth="12"
-                strokeLinecap="round"
-                initial={{ strokeDashoffset: 440 }}
-                animate={{ 
-                  strokeDashoffset: 440 - (440 * adherencePercentage / 100)
+          {/* Streak Counter */}
+          {streak > 0 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-6 py-3 rounded-full font-bold text-lg shadow-lg"
+            >
+              <motion.span
+                animate={{
+                  scale: [1, 1.3, 1],
                 }}
-                transition={{ duration: 1.5, ease: 'easeOut' }}
-                style={{ strokeDasharray: 440 }}
-              />
-              <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#3b82f6" />
-                  <stop offset="50%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#ec4899" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
+                transition={{
+                  duration: 0.5,
+                  repeat: Infinity,
+                  repeatDelay: 1,
+                }}
+              >
+                🔥
+              </motion.span>
+              {streak} Day Streak!
+            </motion.div>
+          )}
         </motion.div>
+
+        {/* Stats Card with 3D Tilt */}
+        <TiltCard>
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl p-8 mb-10 border border-white/40"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm font-medium mb-2">Adherence This Week</p>
+                <motion.p 
+                  className="text-6xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent"
+                  key={displayedPercentage}
+                  initial={{ scale: 1.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                >
+                  {displayedPercentage.toFixed(0)}%
+                </motion.p>
+              </div>
+              
+              <div className="flex gap-12">
+                <div className="text-center">
+                  <motion.p 
+                    className="text-5xl font-bold text-green-500"
+                    key={displayedTaken}
+                    initial={{ scale: 1.5 }}
+                    animate={{ scale: 1 }}
+                  >
+                    {displayedTaken}
+                  </motion.p>
+                  <p className="text-sm text-gray-500 mt-1">Taken</p>
+                </div>
+                <div className="text-center">
+                  <motion.p 
+                    className="text-5xl font-bold text-orange-500"
+                    key={displayedRemaining}
+                    initial={{ scale: 1.5 }}
+                    animate={{ scale: 1 }}
+                  >
+                    {displayedRemaining}
+                  </motion.p>
+                  <p className="text-sm text-gray-500 mt-1">Remaining</p>
+                </div>
+              </div>
+
+              {/* Animated Progress Ring */}
+              <svg className="w-40 h-40 -rotate-90">
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  fill="none"
+                  stroke="#e0e7ff"
+                  strokeWidth="12"
+                />
+                <motion.circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  fill="none"
+                  stroke="url(#gradient)"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  initial={{ strokeDashoffset: 440 }}
+                  animate={{ 
+                    strokeDashoffset: 440 - (440 * displayedPercentage / 100)
+                  }}
+                  transition={{ duration: 1.5, ease: 'easeOut' }}
+                  style={{ strokeDasharray: 440 }}
+                />
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="50%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </motion.div>
+        </TiltCard>
       </div>
 
-     {/* Weekly Pillbox Grid */}
+      {/* Weekly Pillbox Grid */}
       <div className="grid grid-cols-7 gap-6 w-full max-w-6xl">
         {days.map((day, index) => {
           const status = dayStatuses[index];
           const isToday = new Date().getDay() === index;
-          const isMissed = !status.taken && index < new Date().getDay(); // Missed if before today and not taken
+          const isMissed = !status.taken && index < new Date().getDay();
 
           return (
             <motion.div
@@ -299,118 +439,147 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
                 )}
               </div>
 
-              {/* Compartment */}
-              <motion.button
-                onClick={() => handleTakePill(index)}
-                whileHover={{ scale: status.taken ? 1 : 1.08, y: -8 }}
-                whileTap={{ scale: 0.95 }}
-                className={`relative w-full h-40 rounded-2xl border-4 transition-all overflow-hidden ${
-                  status.taken 
-                    ? 'bg-gradient-to-br from-gray-100 to-gray-50 border-gray-300' 
-                    : isMissed
-                    ? 'bg-gradient-to-br from-red-50 to-red-100 border-red-300 shadow-2xl'
-                    : `bg-gradient-to-br ${pillboxColors[index]} border-white/40 shadow-2xl`
-                }`}
-                style={{
-                  boxShadow: !status.taken && !isMissed ? `0 10px 40px ${pillboxColors[index].split(' ')[1].replace('to-', '')}40` : 
-                             isMissed ? '0 10px 40px rgba(239, 68, 68, 0.3)' : undefined
-                }}
-              >
-                {/* Missed Day Indicator */}
-                {isMissed && (
-                  <motion.div
-                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-lg"
-                    animate={{
-                      scale: [1, 1.2, 1],
-                    }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                    }}
-                  >
-                    !
-                  </motion.div>
-                )}
+              {/* Compartment with 3D Tilt */}
+              <TiltCard>
+                <motion.button
+                  onClick={() => handleTakePill(index)}
+                  whileHover={{ scale: status.taken ? 1 : 1.08, y: -8 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`relative w-full h-40 rounded-2xl border-4 transition-all overflow-hidden ${
+                    status.taken 
+                      ? 'bg-gradient-to-br from-gray-100 to-gray-50 border-gray-300' 
+                      : isMissed
+                      ? 'bg-gradient-to-br from-red-50 to-red-100 border-red-300 shadow-2xl'
+                      : `bg-gradient-to-br ${pillboxColors[index]} border-white/40 shadow-2xl`
+                  }`}
+                  style={{
+                    boxShadow: !status.taken && !isMissed ? `0 10px 40px ${pillboxColors[index].split(' ')[1].replace('to-', '')}40` : 
+                               isMissed ? '0 10px 40px rgba(239, 68, 68, 0.3)' : undefined
+                  }}
+                >
+                  {/* Glowing effect for today */}
+                  {isToday && !status.taken && (
+                    <>
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-br from-blue-400/40 to-transparent rounded-2xl"
+                        animate={{
+                          opacity: [0.3, 0.7, 0.3],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                        }}
+                      />
+                      <motion.div
+                        className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-2xl blur-md"
+                        animate={{
+                          opacity: [0.5, 0.8, 0.5],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                        }}
+                        style={{ zIndex: -1 }}
+                      />
+                    </>
+                  )}
 
-                <AnimatePresence mode="wait">
-                  {!status.taken ? (
+                  {/* Missed Day Indicator */}
+                  {isMissed && (
                     <motion.div
-                      key="pills"
-                      exit={{ 
-                        scale: 0,
-                        y: -150,
-                        rotate: 720,
-                        opacity: 0
+                      className="absolute top-2 right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg"
+                      animate={{
+                        scale: [1, 1.2, 1],
                       }}
-                      transition={{ duration: 0.6 }}
-                      className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4"
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                      }}
                     >
-                      {[...Array(status.pillCount)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          className={`w-16 h-16 rounded-full shadow-xl border-2 ${
-                            isMissed 
-                              ? 'bg-gradient-to-br from-red-200 to-red-300 border-red-400/50'
-                              : 'bg-gradient-to-br from-white to-blue-50 border-white/50'
-                          }`}
-                          animate={{
-                            y: [0, -6, 0],
-                          }}
-                          transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                            delay: index * 0.15 + i * 0.3
-                          }}
-                        />
-                      ))}
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="check"
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ type: 'spring', stiffness: 200 }}
-                      className="absolute inset-0 flex flex-col items-center justify-center"
-                    >
-                      <svg className="w-24 h-24 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <motion.path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={3}
-                          d="M5 13l4 4L19 7"
-                          initial={{ pathLength: 0 }}
-                          animate={{ pathLength: 1 }}
-                          transition={{ duration: 0.5 }}
-                        />
-                      </svg>
-                      {status.time && (
-                        <motion.p 
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-xs text-gray-500 mt-2 font-semibold"
-                        >
-                          {status.time}
-                        </motion.p>
-                      )}
+                      !
                     </motion.div>
                   )}
-                </AnimatePresence>
 
-                {/* Shine effect */}
-                {!status.taken && !isMissed && (
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent"
-                    animate={{
-                      opacity: [0.3, 0.6, 0.3],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      delay: index * 0.2,
-                    }}
-                  />
-                )}
-              </motion.button>
+                  <AnimatePresence mode="wait">
+                    {!status.taken ? (
+                      <motion.div
+                        key="pills"
+                        exit={{ 
+                          scale: 0,
+                          y: -150,
+                          rotate: 720,
+                          opacity: 0
+                        }}
+                        transition={{ duration: 0.6 }}
+                        className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4"
+                      >
+                        {[...Array(status.pillCount)].map((_, i) => (
+                          <motion.div
+                            key={i}
+                            className={`w-16 h-16 rounded-full shadow-xl border-2 ${
+                              isMissed 
+                                ? 'bg-gradient-to-br from-red-200 to-red-300 border-red-400/50'
+                                : 'bg-gradient-to-br from-white to-blue-50 border-white/50'
+                            }`}
+                            animate={{
+                              y: [0, -6, 0],
+                            }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              delay: index * 0.15 + i * 0.3
+                            }}
+                          />
+                        ))}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="check"
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: 'spring', stiffness: 200 }}
+                        className="absolute inset-0 flex flex-col items-center justify-center"
+                      >
+                        <svg className="w-24 h-24 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <motion.path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 0.5 }}
+                          />
+                        </svg>
+                        {status.time && (
+                          <motion.p 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-xs text-gray-500 mt-2 font-semibold"
+                          >
+                            {status.time}
+                          </motion.p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Shine effect */}
+                  {!status.taken && !isMissed && (
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent"
+                      animate={{
+                        opacity: [0.3, 0.6, 0.3],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        delay: index * 0.2,
+                      }}
+                    />
+                  )}
+                </motion.button>
+              </TiltCard>
 
               {/* Sensor Status */}
               <motion.div
@@ -447,6 +616,7 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
           );
         })}
       </div>
+
       {/* Help Text */}
       <motion.p
         initial={{ opacity: 0 }}
@@ -456,6 +626,43 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
       >
         💡 Click any day to mark your dose as taken • Hardware sensors auto-detect pill removal
       </motion.p>
+    </motion.div>
+  );
+};
+
+// 3D Tilt Card Component
+const TiltCard = ({ children }: { children: React.ReactNode }) => {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  
+  const rotateX = useTransform(y, [-100, 100], [10, -10]);
+  const rotateY = useTransform(x, [-100, 100], [-10, 10]);
+
+  const handleMouse = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    x.set(event.clientX - centerX);
+    y.set(event.clientY - centerY);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      style={{
+        rotateX,
+        rotateY,
+        transformStyle: 'preserve-3d',
+      }}
+      onMouseMove={handleMouse}
+      onMouseLeave={handleMouseLeave}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+    >
+      {children}
     </motion.div>
   );
 };
