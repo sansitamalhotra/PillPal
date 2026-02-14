@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LandingPage from './components/LandingPage';
+import ScanFlow from './components/ScanFlow';
 import WeeklyView from './components/WeeklyView';
 import PharmacyDashboard from './components/PharmacyDashboard';
 
-type Screen = 'landing' | 'weekly' | 'pharmacy';
+type Screen = 'landing' | 'scan' | 'weekly' | 'pharmacy';
 type UserMode = 'patient' | 'pharmacy';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('landing');
   const [userMode, setUserMode] = useState<UserMode>('patient');
+  const [scannedPill, setScannedPill] = useState<any>(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100">
@@ -55,7 +57,18 @@ function App() {
         {currentScreen === 'landing' && userMode === 'patient' && (
           <LandingPage 
             key="landing"
-            onStart={() => setCurrentScreen('weekly')} 
+            onStart={() => setCurrentScreen('scan')} 
+          />
+        )}
+        
+        {currentScreen === 'scan' && userMode === 'patient' && (
+          <ScanFlow
+            key="scan"
+            onScanComplete={(pillData) => {
+              setScannedPill(pillData);
+              setCurrentScreen('weekly');
+            }}
+            onBack={() => setCurrentScreen('landing')}
           />
         )}
         
