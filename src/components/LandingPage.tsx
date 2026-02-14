@@ -25,13 +25,18 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
       exit={{ opacity: 0 }}
       className="flex flex-col items-center justify-center min-h-screen p-8 relative overflow-hidden"
     >
-      {/* Background Blobs for More Interest */}
+      {/* Background Blobs - More Visible! */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Large Blue Blob - Top Left */}
         <motion.div
-          className="absolute -top-40 -left-40 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl"
+          className="absolute -top-64 -left-64 w-[600px] h-[600px] rounded-full blur-3xl"
+          style={{
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(147, 197, 253, 0.3) 100%)',
+          }}
           animate={{
-            x: [0, 50, 0],
-            y: [0, 30, 0],
+            x: [0, 80, 0],
+            y: [0, 50, 0],
+            scale: [1, 1.1, 1],
           }}
           transition={{
             duration: 20,
@@ -39,36 +44,17 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
             ease: "easeInOut"
           }}
         />
+
+        {/* Large Purple Blob - Bottom Right */}
         <motion.div
-          className="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl"
+          className="absolute -bottom-64 -right-64 w-[700px] h-[700px] rounded-full blur-3xl"
+          style={{
+            background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(192, 132, 252, 0.25) 100%)',
+          }}
           animate={{
-            x: [0, -50, 0],
-            y: [0, -30, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        {/* NEW BLOBS! */}
-        <motion.div
-          className="absolute top-20 right-1/4 w-64 h-64 bg-pink-200/25 rounded-full blur-3xl"
-          animate={{
-            x: [0, 30, -30, 0],
-            y: [0, -20, 20, 0],
+            x: [0, -60, 0],
+            y: [0, -40, 0],
+            scale: [1, 1.15, 1],
           }}
           transition={{
             duration: 18,
@@ -76,14 +62,74 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
             ease: "easeInOut"
           }}
         />
+
+        {/* Cyan Blob - Center */}
         <motion.div
-          className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-teal-200/20 rounded-full blur-3xl"
+          className="absolute top-1/3 left-1/2 w-[500px] h-[500px] rounded-full blur-3xl"
+          style={{
+            background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.3) 0%, rgba(103, 232, 249, 0.2) 100%)',
+          }}
           animate={{
-            scale: [1, 1.3, 1],
-            x: [0, -40, 0],
+            scale: [1, 1.2, 1],
+            rotate: [0, 180, 360],
+            x: [-50, 50, -50],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+
+        {/* Pink Blob - Top Right */}
+        <motion.div
+          className="absolute top-32 right-1/4 w-[450px] h-[450px] rounded-full blur-3xl"
+          style={{
+            background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.3) 0%, rgba(251, 113, 133, 0.2) 100%)',
+          }}
+          animate={{
+            x: [0, 50, -50, 0],
+            y: [0, -30, 30, 0],
+            scale: [1, 1.1, 1],
           }}
           transition={{
             duration: 22,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+
+        {/* Teal Blob - Bottom Left */}
+        <motion.div
+          className="absolute bottom-1/4 left-1/4 w-[550px] h-[550px] rounded-full blur-3xl"
+          style={{
+            background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.3) 0%, rgba(94, 234, 212, 0.2) 100%)',
+          }}
+          animate={{
+            scale: [1, 1.25, 1],
+            x: [0, -60, 0],
+            y: [0, 40, 0],
+          }}
+          transition={{
+            duration: 24,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+
+        {/* Small Indigo Blob - Middle Right */}
+        <motion.div
+          className="absolute top-1/2 right-1/3 w-[400px] h-[400px] rounded-full blur-3xl"
+          style={{
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(129, 140, 248, 0.15) 100%)',
+          }}
+          animate={{
+            x: [0, -40, 40, 0],
+            y: [0, 30, -30, 0],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{
+            duration: 20,
             repeat: Infinity,
             ease: "easeInOut"
           }}
