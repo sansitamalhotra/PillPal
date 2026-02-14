@@ -1,0 +1,29 @@
+{
+  "name": "makeuoft",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sansitamalhotra/makeUofT.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sansitamalhotra/makeUofT/issues"
+  },
+  "homepage": "https://github.com/sansitamalhotra/makeUofT#readme",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "googleapis": "^171.4.0",
+    "multer": "^2.0.2",
+    "node-fetch": "^3.3.2"
+  }
+}
