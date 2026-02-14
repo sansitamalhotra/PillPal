@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface WeeklyViewProps {
   onBack: () => void;
+  medications: any[];
 }
 
 interface DayStatus {
@@ -11,10 +12,13 @@ interface DayStatus {
   pillCount: number;
 }
 
-const WeeklyView = ({ onBack }: WeeklyViewProps) => {
+const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const [dayStatuses, setDayStatuses] = useState<Record<number, DayStatus>>(
-    Object.fromEntries(days.map((_, i) => [i, { taken: false, pillCount: 2 }]))
+    Object.fromEntries(days.map((_, i) => [i, { 
+      taken: false, 
+      pillCount: i % 2 === 0 ? 3 : 2 // Alternating 3 and 2 pills per day
+    }]))
   );
   const [showConfetti, setShowConfetti] = useState(false);
   const [showRefillAlert, setShowRefillAlert] = useState(false);

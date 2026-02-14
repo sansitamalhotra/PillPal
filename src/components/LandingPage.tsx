@@ -63,6 +63,31 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
             ease: "easeInOut"
           }}
         />
+        {/* NEW BLOBS! */}
+        <motion.div
+          className="absolute top-20 right-1/4 w-64 h-64 bg-pink-200/25 rounded-full blur-3xl"
+          animate={{
+            x: [0, 30, -30, 0],
+            y: [0, -20, 20, 0],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-teal-200/20 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            x: [0, -40, 0],
+          }}
+          transition={{
+            duration: 22,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
       </div>
 
       {/* Title */}
@@ -90,7 +115,7 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
           transition={{ delay: 0.5 }}
           className="text-2xl text-gray-600 font-medium"
         >
-          Your smart medication companion 💙💊
+          Your smart medication companion 💙
         </motion.p>
       </motion.div>
 
@@ -267,12 +292,11 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 1.2 }}
-        className="mt-20 grid grid-cols-3 gap-8 z-10"
+        className="mt-20 grid grid-cols-2 gap-8 z-10"
       >
         {[
-          { icon: '📸', text: 'Scan Pills', color: 'from-blue-400 to-blue-600' },
-          { icon: '🔔', text: 'Auto Refill', color: 'from-purple-400 to-purple-600' },
-          { icon: '📊', text: 'Track Progress', color: 'from-pink-400 to-pink-600' }
+          { icon: '🔔', text: 'Smart Refill Alerts', color: 'from-purple-400 to-purple-600' },
+          { icon: '📊', text: 'Track Adherence', color: 'from-pink-400 to-pink-600' }
         ].map((feature, i) => (
           <motion.div
             key={i}

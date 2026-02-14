@@ -11,7 +11,17 @@ type UserMode = 'patient' | 'pharmacy';
 function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('landing');
   const [userMode, setUserMode] = useState<UserMode>('patient');
-  const [scannedPill, setScannedPill] = useState<any>(null);
+  const [medications, setMedications] = useState<any[]>([]);
+
+  const handleScanComplete = (pillData: any) => {
+    setMedications([...medications, pillData]);
+    setCurrentScreen('weekly');
+  };
+
+  const handleAddAnother = () => {
+    // Stay on scan screen to add another medication
+    setCurrentScreen('scan');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100">
@@ -64,10 +74,8 @@ function App() {
         {currentScreen === 'scan' && userMode === 'patient' && (
           <ScanFlow
             key="scan"
-            onScanComplete={(pillData) => {
-              setScannedPill(pillData);
-              setCurrentScreen('weekly');
-            }}
+            onScanComplete={handleScanComplete}
+            onAddAnother={handleAddAnother}
             onBack={() => setCurrentScreen('landing')}
           />
         )}
@@ -75,6 +83,7 @@ function App() {
         {currentScreen === 'weekly' && userMode === 'patient' && (
           <WeeklyView
             key="weekly"
+            medications={medications}
             onBack={() => setCurrentScreen('landing')}
           />
         )}
