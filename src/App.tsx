@@ -81,9 +81,9 @@ function App() {
         )}
         
         {currentScreen === 'scan' && userMode === 'patient' && (
-          <ScanFlow
+            <ScanFlow
             key="scan"
-            onScanComplete={handleScanComplete}
+            onComplete={handleScanComplete}
             onAddAnother={handleAddAnother}
             onBack={() => setCurrentScreen('landing')}
           />

@@ -62,7 +62,7 @@ const SplashScreen = ({ onComplete }: SplashScreenProps) => {
         transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
         className="text-8xl font-black text-white mb-8 tracking-tight drop-shadow-lg"
       >
-        PillTrack
+        PillPal
       </motion.h1>
 
       {/* Loading Text */}
