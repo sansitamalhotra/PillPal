@@ -6,6 +6,9 @@ import ScanFlow from './ScanFlow';
 interface WeeklyViewProps {
   onBack: () => void;
   medications: any[];
+  onTrackRefill: () => void;  
+  onViewAnalytics: () => void;  
+  isDark: boolean;  
 }
 
 interface DayStatus {
@@ -14,7 +17,7 @@ interface DayStatus {
   pillCount: number;
 }
 
-const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
+const WeeklyView = ({ onBack, medications, onTrackRefill, onViewAnalytics, isDark }: WeeklyViewProps) => {
   const [showScanner, setShowScanner] = useState(false);
   const [meds, setMeds] = useState(medications);
   const [showMedList, setShowMedList] = useState(false);
@@ -757,6 +760,68 @@ const WeeklyView = ({ onBack, medications }: WeeklyViewProps) => {
           );
         })}
       </div>
+      {/* Feature Cards */}
+      <motion.div
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 1.2 }}
+        className="mt-20 grid grid-cols-2 gap-8 w-full max-w-6xl z-10"
+      >
+        <motion.button
+          onClick={onTrackRefill}
+          whileHover={{ y: -8, scale: 1.05 }}
+          className={`p-8 ${isDark ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-2xl shadow-lg border ${isDark ? 'border-gray-700' : 'border-white/40'}`}
+        >
+          <motion.div 
+            className="text-5xl mb-3"
+            animate={{
+              rotate: [0, 10, -10, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+            }}
+          >
+            🔔
+          </motion.div>
+          <div className={`text-lg font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent`}>
+            Track Refill Status
+          </div>
+        </motion.button>
+
+        <motion.button
+          onClick={onViewAnalytics}
+          whileHover={{ y: -8, scale: 1.05 }}
+          className={`p-8 ${isDark ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-2xl shadow-lg border ${isDark ? 'border-gray-700' : 'border-white/40'}`}
+        >
+          <motion.div 
+            className="text-5xl mb-3"
+            animate={{
+              rotate: [0, 10, -10, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              delay: 0.3,
+            }}
+          >
+            📊
+          </motion.div>
+          <div className={`text-lg font-bold bg-gradient-to-r from-pink-400 to-pink-600 bg-clip-text text-transparent`}>
+            View Analytics
+          </div>
+        </motion.button>
+      </motion.div>
+
+      {/* Help Text */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5 }}
+        className="mt-12 text-gray-500 text-center"
+      >
+        💡 Click any day to mark as taken • 💊 View/delete meds • + Scan new medication
+      </motion.p>
 
       {/* Help Text */}
       <motion.p
