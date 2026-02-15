@@ -8,11 +8,13 @@ import ProfilePage from './components/ProfilePage';
 import RefillTracker from './components/RefillTracker';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import DarkModeToggle from './components/DarkModeToggle';
+import SplashScreen from './components/SplashScreen';  // ← ADD THIS
 
 type Screen = 'landing' | 'weekly' | 'pharmacy' | 'profile' | 'refill-tracker' | 'analytics';
 type UserMode = 'patient' | 'pharmacy';
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);  // ← ADD THIS
   const [currentScreen, setCurrentScreen] = useState<Screen>('landing');
   const [userMode, setUserMode] = useState<UserMode>('patient');
   const [user, setUser] = useState<any>(null);
@@ -28,10 +30,16 @@ function App() {
     setCurrentScreen('landing');
   };
 
+  // ← ADD THIS: Show splash screen first
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
+
   // Show auth page if not logged in
   if (!user) {
     return <AuthPage onLogin={handleLogin} />;
   }
+
 
   const bgClass = isDark 
     ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
