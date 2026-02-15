@@ -1,73 +1,60 @@
 // server.js
 import express from "express";
-import fetch from "node-fetch";
-import "dotenv/config";
 import { google } from "googleapis";
+import "dotenv/config";
 import cors from "cors";
 
 const app = express();
-
-/* ---------------- Middleware ---------------- */
-app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
+app.use(cors({ origin: "http://localhost:5173" }));
 
-/* ---------------- Google Calendar ---------------- */
+// Google Calendar setup
 const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.GOOGLE_REDIRECT_URI
 );
+oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-oauth2Client.setCredentials({
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+// Root route
+app.get("/", (req, res) => {
+    res.send("✅ Server running. Use /calendar-text to add events.");
 });
 
-const calendar = google.calendar({
-    version: "v3",
-    auth: oauth2Client
-});
+// Add calendar event from frontend OCR text
+app.post("/scan-image", async (req, res) => {
+    const pillData = req.body;
+    console.log("Received pill data:", pillData);
 
-/* ---------------- Routes ---------------- */
-
-// Health check
-app.get("/", (_, res) => {
-    res.send("✅ Backend running");
-});
-
-// Calendar insert (USED NOW)
-app.post("/calendar", async (req, res) => {
+    // Call Google Calendar API here
     try {
-        const { summary, description, startDateTime, endDateTime } = req.body;
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 0);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 15);
 
         const event = await calendar.events.insert({
             calendarId: "primary",
             requestBody: {
-                summary,
-                description,
-                start: {
-                    dateTime: startDateTime,
-                    timeZone: "America/Toronto"
-                },
-                end: {
-                    dateTime: endDateTime,
-                    timeZone: "America/Toronto"
+                summary: `💊 Take ${pillData.name}`,
+                description: `${pillData.dosage}\n${pillData.frequency}\n${pillData.timing}\nQuantity: ${pillData.quantity}`,
+                start: { dateTime: start.toISOString(), timeZone: "America/Toronto" },
+                end: { dateTime: end.toISOString(), timeZone: "America/Toronto" },
+                reminders: {
+                    useDefault: false,
+                    overrides: [
+                        { method: "popup", minutes: 0 } // 0 minutes = immediately at event start
+                    ]
                 }
             }
         });
 
-        console.log("📅 Calendar event created:", event.data.htmlLink);
-        res.json({ success: true, event: event.data });
-
+        res.json({ success: true, event });
     } catch (err) {
         console.error(err);
-        res.status(500).json({
-            error: "Calendar insert failed",
-            details: err.message
-        });
+        res.status(500).json({ error: "Calendar insert failed", details: err.message });
     }
 });
 
-/* ---------------- Start ---------------- */
-app.listen(3000, () => {
-    console.log("✅ Server running at http://localhost:3000");
-});
+
+app.listen(3000, () => console.log("✅ Server running on http://localhost:3000"));

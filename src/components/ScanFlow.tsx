@@ -23,47 +23,45 @@ const ScanFlow = ({ onScanComplete, onAddAnother, onBack }: ScanFlowProps) => {
     }
   }, [webcamRef]);
 
+
   const startScanning = async (image: string) => {
     setStep('scanning');
 
-    // Simulate scanning progress
-    for (let i = 0; i <= 100; i += 5) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+    // Progress animation
+    for (let i = 0; i <= 100; i += 10) {
+      await new Promise(resolve => setTimeout(resolve, 50));
       setScanProgress(i);
     }
 
-    // Simulate random success/failure for demo (70% success rate)
-    const isSuccess = Math.random() > 0.3;
-
-    if (!isSuccess) {
-      setStep('error');
-      return;
-    }
-
-    // TODO: Replace with actual Gemini API call
-    // This is MOCK DATA - replace with real Gemini response
-    const medications = [
-      { name: 'Lisinopril', dosage: '10mg', frequency: 'Once daily', timing: 'Morning', color: 'from-blue-400 to-blue-600' },
-      { name: 'Metformin', dosage: '500mg', frequency: 'Twice daily', timing: 'Morning & Evening', color: 'from-purple-400 to-purple-600' },
-      { name: 'Atorvastatin', dosage: '20mg', frequency: 'Once daily', timing: 'Bedtime', color: 'from-pink-400 to-pink-600' },
-    ];
-
-    const randomMed = medications[Math.floor(Math.random() * medications.length)];
-    const mockPillData = {
-      ...randomMed,
-      quantity: 30,
+    // Pill data
+    const pillData = {
+      patientName: "John Doe",
+      name: "Lisinopril",
+      dosage: "10mg",
+      frequency: "Once daily",
+      timing: "Morning",
+      quantity: 30
     };
 
     try {
-      await addToGoogleCalendar(mockPillData);
-      console.log("✅ Calendar event created");
-      setPillData(mockPillData);
+      // Send pill data to backend to create Google Calendar event
+      const response = await fetch("http://localhost:3000/scan-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pillData)
+      });
+
+      const result = await response.json();
+      console.log("✅ Calendar event created:", result);
+
+      setPillData(pillData);
       setStep('results');
     } catch (err) {
       console.error("❌ Calendar error", err);
-      setStep('error');
+      setStep('error'); // only if backend fails
     }
   };
+
 
   const retake = () => {
     setCapturedImage(null);
@@ -123,7 +121,7 @@ const ScanFlow = ({ onScanComplete, onAddAnother, onBack }: ScanFlowProps) => {
         whileHover={{ scale: 1.05, x: -5 }}
         whileTap={{ scale: 0.95 }}
         onClick={async () => {
-          await addToCalendar(pillData);
+          await addToGoogleCalendar(pillData);
           onScanComplete(pillData);
         }}
         className="absolute top-24 left-8 p-4 bg-white/80 backdrop-blur-sm rounded-full shadow-lg flex items-center gap-2 font-semibold text-gray-700 z-50"
