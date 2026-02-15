@@ -36,6 +36,13 @@ function App() {
   const bgClass = isDark 
     ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
     : 'bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100';
+    
+  setInterval(async () => {
+  const r = await fetch("/state");
+  const data = await r.json();
+  console.log("Browser got:", data);
+}, 500);
+
 
   return (
     <div className={`min-h-screen ${bgClass} transition-colors duration-300`}>
