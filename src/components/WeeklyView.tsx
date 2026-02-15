@@ -9,6 +9,7 @@ interface WeeklyViewProps {
   onTrackRefill: () => void;  
   onViewAnalytics: () => void;  
   isDark: boolean;  
+  pillState: string;
 }
 
 interface DayStatus {
@@ -17,7 +18,14 @@ interface DayStatus {
   pillCount: number;
 }
 
-const WeeklyView = ({ onBack, medications, onTrackRefill, onViewAnalytics, isDark }: WeeklyViewProps) => {
+const isTakenState = (state: string) => {
+  const normalized = state.trim().toLowerCase();
+  return (
+    normalized === 'pill taken'
+  );
+};
+
+const WeeklyView = ({ onBack, medications, onTrackRefill, onViewAnalytics, isDark, pillState }: WeeklyViewProps) => {
   const [showScanner, setShowScanner] = useState(false);
   const [meds, setMeds] = useState(medications);
   const [showMedList, setShowMedList] = useState(false);
@@ -124,6 +132,33 @@ const WeeklyView = ({ onBack, medications, onTrackRefill, onViewAnalytics, isDar
       setShowRefillAlert(true);
     }
   }, [remainingDays, refillSent]);
+
+  // Sync today's "taken" status from Arduino state.
+  useEffect(() => {
+    if (!isTakenState(pillState)) {
+      return;
+    }
+
+    const today = new Date().getDay();
+    if (dayStatuses[today]?.taken) {
+      return;
+    }
+
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    playSound('pop');
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 3000);
+
+    setDayStatuses(prev => ({
+      ...prev,
+      [today]: {
+        ...prev[today],
+        taken: true,
+        pillCount: 0,
+        time: now
+      }
+    }));
+  }, [pillState, dayStatuses]);
 
   const handleTakePill = (dayIndex: number) => {
     if (!dayStatuses[dayIndex].taken) {

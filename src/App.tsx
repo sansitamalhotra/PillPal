@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LandingPage from './components/LandingPage';
 import WeeklyView from './components/WeeklyView';
@@ -18,6 +18,7 @@ function App() {
   const [user, setUser] = useState<any>(null);
   const [medications, setMedications] = useState<any[]>([]);
   const [isDark, setIsDark] = useState(false);
+  const [pillState, setPillState] = useState<string>('UNKNOWN');
 
   const handleLogin = (userData: any) => {
     setUser(userData);
@@ -28,6 +29,28 @@ function App() {
     setCurrentScreen('landing');
   };
 
+  // Poll Arduino state and keep latest value in app state.
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const pollState = async () => {
+      try {
+        const r = await fetch('/state');
+        const data = await r.json();
+        setPillState(data.state ?? 'UNKNOWN');
+        console.log(r);
+      } catch (error) {
+        console.error('Failed to fetch /state:', error);
+      }
+    };
+
+    pollState();
+    const timerId = window.setInterval(pollState, 500);
+    return () => window.clearInterval(timerId);
+  }, [user]);
+
   // Show auth page if not logged in
   if (!user) {
     return <AuthPage onLogin={handleLogin} />;
@@ -36,13 +59,6 @@ function App() {
   const bgClass = isDark 
     ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
     : 'bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100';
-    
-  setInterval(async () => {
-  const r = await fetch("/state");
-  const data = await r.json();
-  console.log("Browser got:", data);
-}, 500);
-
 
   return (
     <div className={`min-h-screen ${bgClass} transition-colors duration-300`}>
@@ -129,6 +145,7 @@ function App() {
                 onTrackRefill={() => setCurrentScreen('refill-tracker')}
                 onViewAnalytics={() => setCurrentScreen('analytics')}
                 isDark={isDark}
+                pillState={pillState}
               />
             </motion.div>
           )}
