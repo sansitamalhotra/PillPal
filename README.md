@@ -22,7 +22,7 @@
 
 Medication non-adherence is a silent crisis:
 
-- 💀 **125,000 deaths** annually in the US caused by not taking medication correctly
+- 💀 **125,000 deaths** annually in Canada caused by not taking medication correctly
 - 🏥 **$300 billion** in avoidable healthcare costs every year
 - 👴 Elderly patients managing **multiple prescriptions** with no system to verify compliance
 - 🎓 University students forgetting doses during **high-stress periods like exams**
