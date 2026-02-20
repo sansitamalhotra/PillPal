@@ -327,8 +327,8 @@ npm run dev
 
 | Name | Role |
 |------|------|
-| **Sansita Malhotra** | Frontend — React/TypeScript, animations, Google Calendar integration, UI/UX |
-| Teammate 2 | Backend — OpenCV + Tesseract OCR prescription scanning pipeline |
+| **Sansita Malhotra** | Frontend — React/TypeScript, animations, UI/UX |
+| **Chloe Kentebe** | Backend — OpenCV + Tesseract OCR prescription scanning pipeline, Google Calendar integration via Google Cloud  |
 | Teammate 3 | Hardware — Arduino load cell sensors + weight detection logic |
 | Teammate 4 | Hardware — Arduino load cell sensors + ESP32 WiFi integration |
 
